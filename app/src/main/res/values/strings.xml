@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">FApi</string>
+    <string name="facebook_app_id">432435458621900</string>
+    <string name="fb_login_protocol_scheme">fb432435458621900</string>
+
+</resources>

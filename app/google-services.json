@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "99298170214",
+    "firebase_url": "https://classroombooker-default-rtdb.firebaseio.com",
+    "project_id": "classroombooker",
+    "storage_bucket": "classroombooker.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:99298170214:android:a2ea39c207c536c01264a7",
+        "android_client_info": {
+          "package_name": "com.example.fapi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "99298170214-2h6d7k7r9mnt2qm7p2v8j21m09tnpa8t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdqiGduR8ZSW9f8Q644_S76n3tpKKX8IU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "99298170214-2h6d7k7r9mnt2qm7p2v8j21m09tnpa8t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

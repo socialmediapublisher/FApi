@@ -1,6 +1,12 @@
 <resources>
-    <string name="app_name">FApi</string>
+    <string name="app_name">Classroom Booker</string>
     <string name="facebook_app_id">432435458621900</string>
     <string name="fb_login_protocol_scheme">fb432435458621900</string>
+    <string name="instagram_app_id">1079924572594402</string>
+    <string name="instagram_app_secret_key">a3f31b213283bf291160e3a1a0efb24e</string>
+    <string name="instagram_app_redirect_uri">https://socialmediapublisher.github.io/</string>
+    <string name="reason_1">Group Study</string>
+    <string name="reason_2">Presentation</string>
+    <string name="reason_3">Exposition</string>
 
 </resources>

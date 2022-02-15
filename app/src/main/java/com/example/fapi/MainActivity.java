@@ -2,18 +2,26 @@ package com.example.fapi;
 
 import static com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.CharEncoding.UTF_8;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.TextView;
+import android.widget.ViewFlipper;
 
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -30,14 +38,25 @@ import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.HttpResponse;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.auth.UsernamePasswordCredentials;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.methods.HttpGet;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.impl.auth.BasicScheme;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.impl.client.DefaultHttpClient;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -47,23 +66,37 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 
 public class MainActivity extends AppCompatActivity {
-
+    DatabaseReference myRef;
+    ViewFlipper vf;
     TextView texter;
+    private FirebaseAuth mAuth;
     private CallbackManager callbackManager;
     private LoginButton loginButton;
     private WebView myWebView;
     boolean b = false;
     String a;
     private String id;
+    private TextInputEditText datePick;
+    private TextInputEditText startTimePick;
+    private TextInputEditText endTimePick;
+
+    private FirebaseDatabase database;
+    private Button plus;
+    private Button goBack;
+    private Button validate;
+    private FirebaseUser currentUser;
+    private TextInputEditText reasonPicked;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +109,98 @@ public class MainActivity extends AppCompatActivity {
 
         texter = findViewById(R.id.textView);
 
+        datePick = findViewById(R.id.date_pick);
+
+        datePick.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
+            @SuppressLint("RestrictedApi")
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if(b)
+                {
+                    MaterialDatePicker ma = MaterialDatePicker.Builder.datePicker()
+                            .setTitleText("Select date").setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                            .build();
+                    ma.show(getSupportFragmentManager(),"t");
+                    ma.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
+                        @Override
+                        public void onPositiveButtonClick(Long selection) {
+                            Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                            utc.setTimeInMillis(selection);
+                            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                            String formatted = format.format(utc.getTime());
+                            datePick.setText(formatted);
+                        }
+                    });
+
+                }
+            }
+        });
+
+        startTimePick = findViewById(R.id.start_time_pick);
+        endTimePick = findViewById(R.id.end_time_pick);
+        reasonPicked = findViewById(R.id.reason_tags_pick);
+
+        vf = (ViewFlipper) findViewById(R.id.vf);
+
+        plus = findViewById(R.id.button5);
+        goBack = findViewById(R.id.button6);
+        validate = findViewById(R.id.button4);
+
+        goBack.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                vf.setDisplayedChild(vf.getDisplayedChild()-1);
+            }
+        });
+
+        plus.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                vf.setDisplayedChild(vf.getDisplayedChild()+1);
+            }
+        });
+        validate.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(currentUser == null)
+                {
+                    currentUser = mAuth.getCurrentUser();
+                    vf.setDisplayedChild(0);
+                    Log.d("null","null")
+;                }
+                else if(datePick.getText().toString() != "" && startTimePick.getText().toString() != "" && endTimePick.getText().toString() != "")
+                {
+                    myRef.setValue("Booking/User_" + currentUser.getUid() + "/" + datePick.getText()+ "_" + startTimePick + "_" + endTimePick + "_" +  reasonPicked.getText());
+                    vf.setDisplayedChild(vf.getDisplayedChild()-1);
+                }
+
+            }
+        });
+
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("classroombooker-default-rtdb");
+
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // This method is called once with the initial value and again
+                // whenever data at this location is updated.
+                String value = dataSnapshot.getValue(String.class);
+                Log.d(TAG, "Value is: " + value);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                // Failed to read value
+                Log.w(TAG, "Failed to read value.", error.toException());
+            }
+        });
+
+        mAuth = FirebaseAuth.getInstance();
+
+        currentUser = mAuth.getCurrentUser();
+        if(currentUser != null){
+            //reload();
+        }
+
         loginButton = (LoginButton) findViewById(R.id.login_button);
         loginButton.setReadPermissions(Arrays.asList("public_profile, email"));
 
@@ -83,6 +208,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Log.d("Test", "Nice!");
+                currentUser = mAuth.getCurrentUser();
+                vf.showNext();
             }
 
             @Override
@@ -100,9 +227,10 @@ public class MainActivity extends AppCompatActivity {
             public void onError(FacebookException error) {
                 Log.d("Test", "Error"  + error.toString());
             }
+
         });
 
-        myWebView = new WebView(this);
+        myWebView = findViewById(R.id.webview);
         //byte[] postData = new byte[10];
         String my_code;
         String postData = "code=";
@@ -171,24 +299,22 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+        //set
+        //WebView webview = new WebView(this);
+        //setContentView(webview);
 
 
 
-
-
-        WebView webview = new WebView(this);
-        setContentView(webview);
-
-
-
-        setContentView(myWebView);
+        //setContentView(myWebView);
+        //addContentView(myWebView);
+        //setContentView(R.layout.activity_main);
 
     }
 
     String Url = "https://api.instagram.com/oauth/authorize" +
-            "?client_id=1079924572594402" +
-            "&client_secret=a3f31b213283bf291160e3a1a0efb24e" +
-            "&redirect_uri=https://socialmediapublisher.github.io/" +
+            "?client_id=" + R.string.instagram_app_id +
+            "&client_secret=" + R.string.instagram_app_secret_key +
+            "&redirect_uri=" + R.string.instagram_app_redirect_uri +
             "&scope=user_profile,user_media" +
                 "&response_type=code";
     String query;
@@ -254,6 +380,7 @@ public class MainActivity extends AppCompatActivity {
                 stringBuffer.append("\n");
                 readLine = bufferedReader.readLine();
             }
+
         } catch (Exception e) {
             // TODO: handle exception
         } finally {
@@ -360,10 +487,9 @@ public class MainActivity extends AppCompatActivity {
                                 String userImage = jsonObj2.getString(
                                         "id");
 
-                                myWebView.setAlpha(0);
-
                                 texter.setText(name5);
 
+                                vf.showNext();
 
 
 
@@ -387,6 +513,12 @@ public class MainActivity extends AppCompatActivity {
         }.start();
     }
 
-
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        currentUser = mAuth.getCurrentUser();
+        //updateUI(currentUser);
+    }
 
 }

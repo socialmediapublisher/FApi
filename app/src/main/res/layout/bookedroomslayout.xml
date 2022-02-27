@@ -200,10 +200,19 @@
                             android:textSize="14sp"
                             app:textInputLayoutFocusedRectEnabled="false" />
                     </com.google.android.material.textfield.TextInputLayout>
-
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
                     <com.google.android.material.chip.ChipGroup
+                        android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:background="@color/browser_actions_bg_grey">
+                        android:background="@color/browser_actions_bg_grey"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        app:chipSpacing="8dp"
+                        app:singleSelection="true">
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_1"
@@ -222,6 +231,7 @@
                             android:checked="true"
                             android:text="@string/reason_2" />
                     </com.google.android.material.chip.ChipGroup>
+                    </HorizontalScrollView>
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
